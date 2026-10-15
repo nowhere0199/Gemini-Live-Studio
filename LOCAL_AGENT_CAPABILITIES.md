@@ -1,61 +1,56 @@
-﻿# Gemini Live Studio: local tools, skills and audio diagnostics
+# Gemini Live Studio: local tools, skills and audio diagnostics
 
-Updated: 2026-10-15
+This document describes the local CLI/skill bridge and audio diagnostics.
 
-## Audio output: model versus local playback
+## Audio output diagnostics
 
-Gemini Live audio output is raw mono, signed 16-bit little-endian PCM at 24 kHz. The browser must decode little-endian int16 samples and schedule each returned chunk at 24,000 Hz.
+Gemini Live audio output is raw mono, signed 16-bit little-endian PCM at 24 kHz. The app can export the latest received PCM as WAV without filtering or normalization. Compare that file in an external player with real-time playback.
 
-This app keeps an unmodified copy of the received PCM for the latest completed output (capped at 16 MiB) and exposes Export last model audio (WAV) under Settings â†’ Tools. It also logs chunk count, scheduling gaps/late time, peak amplitude and near-clipping rate. The playback path serializes scheduling work, starts with a small initial queue, and uses a short ramp-in after a measured late gap to reduce a click caused by a discontinuity. The exported WAV is built from the raw received bytes and is not filtered or normalized.
+1. If the beep/crackle is present in the WAV, it exists in the received model/API audio. This alone does not prove the base model is at fault.
+2. If the WAV is clean but live playback is noisy, investigate browser scheduling, buffer gaps, the audio graph, OS mixer, driver and output device.
+3. Check event diagnostics such as chunk count, scheduling gaps, late time, peak level and near-clipping count.
+4. Try a second output device. Transcription cannot confirm or rule out non-speech artifacts.
 
-Diagnostic decision:
-1. Play the WAV outside the live session.
-2. If the beep/crackle is present in the WAV, it exists in the audio returned by Gemini/the API path.
-3. If the WAV sounds clean but the live session is noisy, investigate browser scheduling, output audio graph, OS mixer/driver/device and underrun metrics first.
-4. Use a second output device to rule out a local endpoint problem.
-5. Transcription does not confirm or rule out non-speech artifacts.
-
-The app cannot conclude â€œLLM faultâ€ from a report alone. A matching raw-WAV artifact is the first useful separation test.
+Never log API keys, ephemeral tokens, full audio payloads or unredacted request headers.
 
 ## Local CLI/CMD bridge
 
-Path: POST /api/local-tool (loopback-only server; same-origin page calls only).
+The same-origin endpoint POST /api/local-tool is loopback-only.
 
-- The bridge accepts only a fixed name allowlist. It does not accept arbitrary shell text, command-line arguments or an arbitrary working directory.
-- Read-only checks cover Node, npm, Git, Python, CMD/PowerShell versions, Gemini/Hermes/Claude CLI versions, Gemini CLI's skills list, JavaScript syntax checks for this project, and git status for this project.
-- Tool calls are not run only because Gemini requested them. User opt-in must be enabled in Settings â†’ Tools; a call card then exposes a button to run the approved read-only operation.
-- Results are placed in a JSON response editor. The operator must review them and explicitly choose Return result to send a FunctionResponse back to Gemini.
-- The endpoint checks the expected localhost Origin, rate-limits requests, limits request/output size, and redacts recognizable API keys and bearer tokens from outputs.
-- Skills are read-only from fixed skill roots. Skill content remains in the browser until the operator returns it as a tool result.
-- Not supported by design: free-form PowerShell/CMD, arbitrary script execution, file mutation, installing/uninstalling skills/packages, process termination, deployment, and access to arbitrary paths. Those require a separate reviewed execution workflow.
+- It accepts a fixed operation allowlist, not arbitrary shell text, command-line arguments or arbitrary working directories.
+- Read-only checks cover Node, npm, Git, Python, CMD/PowerShell, Gemini/Hermes/Claude CLI, Gemini CLI skills, project JavaScript syntax and project Git status.
+- Local tools must be enabled by the user in Settings > Tools. Each operation requires an explicit review/run step.
+- Results appear in a JSON response editor. The operator must inspect the result and explicitly return it to Gemini.
+- The endpoint validates localhost Origin, rate-limits requests, limits input/output size and redacts recognizable API keys and bearer tokens.
+- Arbitrary shell execution, file mutation, package/skill installation, process termination, deployment and arbitrary path access are intentionally unsupported.
 
 ## Agent Skills
 
-Three local starter skills are included under .gemini/skills/, the workspace skill directory used by Gemini CLI:
+Three starter skills are included under .gemini/skills/:
 
-- audio-output-diagnostics: compare raw PCM WAV against real-time playback.
-- safe-local-cli: use the fixed read-only bridge and maintain an explicit approval boundary.
-- gemini-live-tool-calling: handle call IDs, arguments and FunctionResponse lifecycle safely.
+- audio-output-diagnostics: compare raw PCM WAV with real-time playback.
+- safe-local-cli: use fixed read-only checks and preserve the approval boundary.
+- gemini-live-tool-calling: validate call IDs, arguments and FunctionResponse lifecycle.
 
-Available skill libraries exposed to the browser:
-- project â†’ this repo's .gemini/skills/.
-- marketing â†’ optional path configured with GEMINI_LIVE_MARKETING_SKILLS_DIR.
-- gemini-user â†’ %USERPROFILE%\.gemini\skills.
-- agents-user â†’ %USERPROFILE%\.agents\skills.
+Skill libraries available to the browser:
 
-This is a browser-side, read-only catalogue. Reading a skill is distinct from installing it or loading it into an Agent CLI. Gemini CLI supports workspace skills in .gemini/skills/ and .agents/skills/, and user skills under .gemini/skills/ and .agents/skills/, with SKILL.md metadata. The current CLI reports this project as untrusted and therefore returns â€œNo skills discoveredâ€; a user must explicitly trust the workspace in Gemini CLI before it loads workspace skills. The browser-side local reader does not change CLI trust. See the official documentation below.
+- project: this repository's .gemini/skills/.
+- gemini-user: %USERPROFILE%/.gemini/skills.
+- agents-user: %USERPROFILE%/.agents/skills.
+- marketing: optional; configure GEMINI_LIVE_MARKETING_SKILLS_DIR to a trusted local skill-library path.
 
-## Function calling notes
+The browser-side reader is a read-only catalogue. Reading a skill is not the same as installing it or loading it into an Agent CLI. Gemini CLI may require the workspace to be explicitly trusted before loading workspace skills.
 
-Live API tool calls are handled by the client: it receives a function call, runs/reviews the implementation, then returns a FunctionResponse with the same ID and function name. The browser never auto-runs an arbitrary command simply because a function call arrived.
+## Function calling
 
-The current model family has its own blocking/non-blocking behavior. The code does not force NON_BLOCKING onto every user function declaration; explicit behavior is preserved, and the selected model's default applies otherwise. Any model-specific scheduling behavior should be rechecked against its official documentation when the model ID changes.
+Live API tool calls are handled by the client. The app receives a functionCall, applies its own review/allowlist policy, and returns a FunctionResponse with the same call ID and function name. It never executes arbitrary code simply because a model requested a tool.
+
+Re-check model-specific blocking/non-blocking behavior against official documentation when model IDs change.
 
 ## References
 
-- Gemini Live capabilities and audio format: https://ai.google.dev/gemini-api/docs/live-api/capabilities
-- Gemini Live tool calling: https://ai.google.dev/gemini-api/docs/live-api/tools
-- Gemini 3.8 Live model notes: https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live
-- Gemini CLI Agent Skills: https://geminicli.com/docs/cli/skills/
-- Gemini CLI skill authoring: https://geminicli.com/docs/cli/creating-skills/
-
+- https://ai.google.dev/gemini-api/docs/live-api/capabilities
+- https://ai.google.dev/gemini-api/docs/live-api/tools
+- https://ai.google.dev/gemini-api/docs/models/gemini-3.8-live
+- https://geminicli.com/docs/cli/skills/
+- https://geminicli.com/docs/cli/creating-skills/
