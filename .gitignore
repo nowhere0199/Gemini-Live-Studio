@@ -1,0 +1,30 @@
+﻿# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and runtime artifacts
+node_modules/
+.npm/
+.cache/
+*.log
+*.pid
+
+# Local editor / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Backups and scratch files
+*.bak
+*.backup
+*-backup
+*-backup.*
+*-backup-*
+*.tmp
+*.swp

@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Gemini Live Studio — Local</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/icons.js" defer></script>
+  <script src="/enhancements.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Gemini Live Studio home">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span><strong>Gemini Live</strong><small>STUDIO / LOCAL</small></span>
+      </a>
+      <div class="top-status"><span id="statusDot" class="status-dot"></span><span id="statusText">Disconnected</span><span class="sep">/</span><span id="latencyText">Ready when you are</span></div>
+      <button id="sessionEventsBtn" class="header-event-trigger" type="button" aria-haspopup="dialog" aria-controls="sessionEventsDialog" aria-expanded="false" title="Open session event stack">
+        <span class="header-event-live-dot"></span><span class="header-event-label">Session Events</span><span id="headerLatestEvent" class="header-event-latest">Studio ready</span><span id="headerEventCount" class="header-event-count">0</span><span class="header-event-chevron" data-icon="chevron-down" data-icon-size="13"></span>
+      </button>
+      <div class="top-actions">
+        <button id="settingsBtn" class="icon-btn settings-launch" type="button" title="Settings" aria-label="Open settings"><span data-icon="settings" data-icon-size="17"></span></button>
+        <button id="exportBtn" class="icon-btn" title="Export transcript" aria-label="Export transcript"><span data-icon="download" data-icon-size="16"></span></button>
+        <button id="clearBtn" class="icon-btn" title="Clear visible transcript" aria-label="Clear transcript"><span data-icon="trash-2" data-icon-size="16"></span></button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel api-panel">
+          <div class="section-head"><div><p class="eyebrow">API ACCESS</p><h2>Credentials & model</h2></div><span class="local-chip">LOCAL ONLY</span></div>
+          <label class="field-label" for="savedKeySelect">Key profile</label>
+          <div class="key-profile-row"><select id="savedKeySelect" aria-label="Select a saved API key"><option value="">New / unsaved key</option></select><button id="manageKeysBtn" class="icon-btn compact-icon-btn" type="button" title="Manage saved keys" aria-label="Manage saved keys"><span data-icon="key-round" data-icon-size="15"></span></button></div>
+          <label class="field-label" for="apiKey">Gemini API key</label>
+          <div class="secret-field"><input id="apiKey" type="password" placeholder="Paste your API key" autocomplete="off" spellcheck="off"><button id="revealKeyBtn" class="mini-btn icon-mini-btn" type="button" title="Show or hide key" aria-label="Show API key"><span data-icon="eye" data-icon-size="15"></span></button></div>
+          <label class="setting compact-setting"><span><strong>Remember this key</strong><small>Save to this browser by default</small></span><input id="rememberKeyToggle" type="checkbox" checked><i></i></label>
+          <div class="field-note security-note">Saved keys stay in this browser profile. Anyone with access to this profile may be able to use them.</div>
+          <label class="field-label" for="modelSelect">Live model</label>
+          <select id="modelSelect">
+            <option value="gemini-3.8-live">Gemini 3.8 Live · Low latency</option>
+            <option value="gemini-3.8-live-extended-thinking">Gemini 3.8 Live · Extended Thinking</option>
+          </select>
+          <div class="model-note" id="modelNote">Interleaved reasoning · best for fast, natural turn-taking.</div>
+          <div class="button-row"><button id="connectBtn" class="btn btn-primary"><span data-icon="arrow-up-right" data-icon-size="15"></span>Connect session</button><button id="disconnectBtn" class="btn btn-secondary" disabled><span data-icon="x" data-icon-size="14"></span>End</button></div>
+          <div class="connect-foot"><span id="tokenState">No token issued</span><span id="sessionTimer">—</span></div>
+        </section>
+
+        <section class="panel setup-panel">
+          <div class="section-head"><div><p class="eyebrow">SESSION SETUP</p><h2>Voice & behavior</h2></div></div>
+          <label class="field-label" for="voiceSelect">Voice</label>
+          <select id="voiceSelect">
+            <option>Puck</option><option>Kore</option><option>Aoede</option><option>Charon</option><option>Fenrir</option><option>Leda</option><option>Orus</option><option>Zephyr</option>
+            <option>Achernar</option><option>Achird</option><option>Algenib</option><option>Algieba</option><option>Alnilam</option><option>Autonoe</option><option>Callirrhoe</option><option>Despina</option><option>Enceladus</option><option>Erinome</option><option>Gacrux</option><option>Iapetus</option><option>Laomedeia</option><option>Rasalgethi</option><option>Sadachbia</option><option>Sadaltager</option><option>Schedar</option><option>Sulafat</option><option>Umbriel</option><option>Vindemiatrix</option><option>Zubenelgenubi</option><option>Pulcherrima</option>
+          </select>
+          <div class="field-grid">
+            <div><label class="field-label" for="thinkingLevel">Thinking level</label><select id="thinkingLevel"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+            <div><label class="field-label" for="mediaResolution">Vision detail</label><select id="mediaResolution"><option value="">Model default</option><option value="MEDIA_RESOLUTION_LOW">Low · lower token cost</option><option value="MEDIA_RESOLUTION_MEDIUM">Medium</option><option value="MEDIA_RESOLUTION_HIGH">High · visual detail</option></select></div>
+          </div>
+          <div id="thinkingHelp" class="field-note">Thinking level is available only for Extended Thinking.</div>
+          <label class="field-label" for="systemInstruction">System instruction</label>
+          <textarea id="systemInstruction" rows="3" placeholder="Set the role, tone, language, or boundaries for this session…">You are a helpful, clear, natural conversational assistant. Speak in the language used by the user unless asked otherwise.</textarea>
+          <div class="setting-list">
+            <label class="setting"><span><strong>Input transcription</strong><small>Show words recognized from your microphone</small></span><input id="inputTranscriptToggle" type="checkbox" checked><i></i></label>
+            <label class="setting"><span><strong>Output transcription</strong><small>Display the model's spoken reply as text</small></span><input id="outputTranscriptToggle" type="checkbox" checked><i></i></label>
+            <label class="setting"><span><strong>Session resumption</strong><small>Keep the conversation resumable after reconnects</small></span><input id="resumeToggle" type="checkbox" checked><i></i></label>
+            <label class="setting"><span><strong>Context compression</strong><small>Extend sessions by compressing older context</small></span><input id="compressionToggle" type="checkbox" checked><i></i></label>
+            <label class="setting"><span><strong>Proactive audio</strong><small>Native behavior · enabled by Gemini 3.8 Live</small></span><input id="proactiveToggle" type="checkbox" checked disabled><i></i></label>
+          </div>
+        </section>
+
+        <details class="panel advanced-panel">
+          <summary><span><p class="eyebrow">ADVANCED CONTROLS</p><strong>Generation & VAD</strong></span><span class="chevron">⌄</span></summary>
+          <div class="advanced-body">
+            <div class="slider-row"><label for="temperature">Temperature <output id="temperatureOut">0.80</output></label><input id="temperature" type="range" min="0" max="2" step="0.05" value="0.8"></div>
+            <div class="slider-row"><label for="topP">Top P <output id="topPOut">0.95</output></label><input id="topP" type="range" min="0" max="1" step="0.01" value="0.95"></div>
+            <div class="field-grid">
+              <div><label class="field-label" for="topK">Top K</label><input id="topK" type="number" min="1" max="100" value="40"></div>
+              <div><label class="field-label" for="maxTokens">Max output tokens</label><input id="maxTokens" type="number" min="1" max="65536" value="4096"></div>
+            </div>
+            <div class="field-grid">
+              <div><label class="field-label" for="startSensitivity">Speech start</label><select id="startSensitivity"><option value="START_SENSITIVITY_LOW">Less sensitive</option><option value="START_SENSITIVITY_UNSPECIFIED" selected>Default (Google)</option><option value="START_SENSITIVITY_HIGH">More sensitive</option></select></div>
+              <div><label class="field-label" for="endSensitivity">Speech end</label><select id="endSensitivity"><option value="END_SENSITIVITY_LOW">Less sensitive</option><option value="END_SENSITIVITY_UNSPECIFIED" selected>Default (Google)</option><option value="END_SENSITIVITY_HIGH">More sensitive</option></select></div>
+            </div>
+            <div class="field-grid">
+              <div><label class="field-label" for="prefixPadding">Prefix padding (ms)</label><input id="prefixPadding" type="number" min="0" max="1000" value="40"></div>
+              <div><label class="field-label" for="silenceDuration">Silence duration (ms)</label><input id="silenceDuration" type="number" min="100" max="5000" step="50" value="650"></div>
+            </div>
+            <label class="setting"><span><strong>Automatic voice detection</strong><small>Let the server detect speech boundaries</small></span><input id="vadToggle" type="checkbox" checked><i></i></label>
+            <label class="setting"><span><strong>Include thought summaries</strong><small>Request supported summaries, not private chain-of-thought</small></span><input id="thoughtToggle" type="checkbox"><i></i></label>
+            <div class="field-note">Model settings take effect when you connect or restart the session. Some parameters may be rejected by a particular model/API version.</div>
+          </div>
+        </details>
+
+        <details class="panel tools-panel">
+          <summary><span><p class="eyebrow">FUNCTION CALLING</p><strong>Custom tools</strong></span><span class="chevron">⌄</span></summary>
+          <div class="advanced-body">
+            <p class="field-note">Declare tool schemas as JSON. The app will show calls from Gemini and let you inspect arguments and manually return JSON; it will not execute arbitrary code.</p>
+            <label class="setting"><span><strong>Google Search grounding</strong><small>Let Gemini ground responses in public web results. Search use may incur charges.</small></span><input id="googleSearchToggle" type="checkbox"><i></i></label>
+            <label class="field-label" for="toolsJson">Function declarations JSON</label>
+            <textarea id="toolsJson" rows="8" spellcheck="false">[
+  {
+    "name": "get_local_status",
+    "description": "Return a status value supplied manually by the operator.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "topic": { "type": "STRING", "description": "What status is needed" }
+      },
+      "required": ["topic"]
+    }
+  }
+]</textarea>
+            <div class="button-row"><button id="validateToolsBtn" class="btn btn-secondary">Validate JSON</button><span id="toolsStatus" class="field-note">Tools are opt-in per session.</span></div>
+            <label class="setting"><span><strong>Enable custom functions</strong><small>Offer the declarations above to Gemini</small></span><input id="toolsToggle" type="checkbox"><i></i></label>
+            <section class="local-agent-card">
+              <div class="local-agent-card-head"><span class="local-agent-mark"><span data-icon="monitor" data-icon-size="17"></span></span><div><strong>Local CLI, CMD & Skills</strong><p>Inspect the installed command-line tools and read local Agent Skills. No arbitrary shell commands are exposed.</p></div></div>
+              <div class="local-agent-actions"><button id="scanLocalCapabilitiesBtn" class="btn btn-secondary" type="button"><span data-icon="refresh-cw" data-icon-size="14"></span>Discover local tools</button><span id="localCapabilitiesStatus" class="field-note" aria-live="polite">Not scanned yet.</span></div>
+              <div id="localCapabilitiesList" class="local-capabilities-list"></div>
+              <div class="local-skill-browser">
+                <div class="local-agent-actions"><label class="field-label" for="localSkillSource">Skill library</label><select id="localSkillSource"><option value="project">This project</option><option value="marketing">D:\PROJECTS\marketingskills</option><option value="gemini-user">User · .gemini/skills</option><option value="agents-user">User · .agents/skills</option></select><button id="listLocalSkillsBtn" class="btn btn-secondary" type="button">Browse skills</button></div>
+                <div id="localSkillsList" class="local-skills-list"></div>
+                <pre id="localSkillPreview" class="local-skill-preview" hidden></pre>
+              </div>
+              <div class="audio-diagnostics-row"><button id="exportLastAudioBtn" class="btn btn-secondary" type="button" disabled><span data-icon="download" data-icon-size="14"></span>Export last model audio (WAV)</button><span id="audioDiagnosticsStatus" class="field-note" aria-live="polite">No model PCM captured yet.</span></div>
+              <label class="setting local-agent-enable"><span><strong>Offer approved local tools to Gemini</strong><small>Function calls show a reviewable result before anything is returned to the model.</small></span><input id="localToolsToggle" type="checkbox"><i></i></label>
+              <div class="local-agent-note"><span data-icon="shield-check" data-icon-size="15"></span><span>Local function calls are read-only and allowlisted. No free-form PowerShell/CMD execution or automatic skill installation.</span></div>
+            </section>
+            <div class="field-note">For current Live models, function calls are client-side: the model requests a function, this app runs or reviews it, and the app explicitly returns a FunctionResponse. Code execution is not enabled by this feature.</div>
+          </div>
+        </details>
+
+        <details class="panel raw-panel">
+          <summary><span><p class="eyebrow">EXPERT MODE</p><strong>Extra setup JSON</strong></span><span class="chevron">⌄</span></summary>
+          <div class="advanced-body">
+            <p class="field-note">Merge additional supported Live setup fields. Core model, AUDIO modality, session resumption, and UI-owned fields stay controlled by this app.</p>
+            <textarea id="extraConfig" rows="8" spellcheck="false" placeholder='{"mediaResolution":"MEDIA_RESOLUTION_MEDIUM"}'></textarea>
+            <button id="validateExtraBtn" class="btn btn-secondary">Validate JSON</button>
+            <div id="extraStatus" class="field-note">Optional. The setup payload is shown in the event log before sending.</div>
+          </div>
+        </details>
+
+        <div class="sidebar-footer">
+          <div class="security-mark"><span data-icon="shield-check" data-icon-size="18"></span></div><div><strong>Local-first by design</strong><p>The app binds to 127.0.0.1. Keys are never written to session logs.</p></div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <div class="workspace-head">
+          <div><p class="eyebrow">REAL-TIME CONVERSATION</p><h1>Talk to Gemini <span class="heading-dot">.</span></h1><p class="subtitle">Native audio streaming · text, voice, vision and asynchronous reasoning</p></div>
+          <div class="model-pill"><span class="pulse-ring"></span><span id="activeModelLabel">Gemini 3.8 Live</span></div>
+        </div>
+        <div class="session-banner">
+          <div class="banner-icon"><span data-icon="bot" data-icon-size="17"></span></div><div class="banner-copy"><strong id="bannerTitle">Your session is standing by</strong><span id="bannerText">Add your Gemini API key, connect, then start with text or microphone audio.</span></div>
+          <span id="interactionBadge" class="interaction-badge">IDLE</span>
+        </div>
+        <div id="conversation" class="conversation" aria-live="polite">
+          <div class="welcome-card" id="welcomeCard">
+            <div class="welcome-orb"><span></span><span></span><span></span></div>
+            <p class="eyebrow">LIVE API / BIDIRECTIONAL</p>
+            <h2>A more natural kind of conversation.</h2>
+            <p>Connect a session, speak naturally, interrupt at any time, or send text and visual context.</p>
+            <div class="welcome-chips"><span>Live audio</span><span>Low latency</span><span>Extended thinking</span><span>Vision frames</span></div>
+          </div>
+        </div>
+        <section id="toolCalls" class="tool-calls" hidden><div class="tool-calls-head"><strong>Tool call requests</strong><span>Manual response required</span></div><div id="toolCallList"></div></section>
+        <section id="attachmentTray" class="attachment-tray" hidden></section>
+        <div class="composer-wrap">
+          <div class="composer-tools">
+            <button id="imageBtn" class="tool-btn" title="Attach image"><span data-icon="image-plus" data-icon-size="16"></span><span>Image</span></button>
+            <button id="audioFileBtn" class="tool-btn" title="Stream audio file"><span data-icon="audio-lines" data-icon-size="16"></span><span>Audio file</span></button>
+            <button id="videoFileBtn" class="tool-btn" title="Stream video frames"><span data-icon="video" data-icon-size="16"></span><span>Video file</span></button>
+            <button id="cameraBtn" class="tool-btn" title="Share camera frames"><span data-icon="camera" data-icon-size="16"></span><span>Camera</span></button>
+            <span class="tool-spacer"></span><span id="micHint" class="mic-hint">Mic off</span>
+          </div>
+          <div class="composer">
+            <textarea id="messageInput" rows="1" placeholder="Type a message to Gemini…" aria-label="Message to Gemini"></textarea>
+            <button id="sendBtn" class="send-btn" title="Send text" aria-label="Send message"><span data-icon="send" data-icon-size="17"></span></button>
+          </div>
+          <div class="composer-bottom">
+            <span id="composeHint">Text input is sent as a complete turn. Microphone audio is streamed in real time.</span>
+            <div class="composer-actions"><button id="stopResponseBtn" class="text-action" disabled><span data-icon="circle-stop" data-icon-size="14"></span>Interrupt response</button><button id="micBtn" class="mic-btn" disabled><span class="mic-icon"><span data-icon="mic" data-icon-size="16"></span></span><span id="micBtnText">Start microphone</span></button></div>
+          </div>
+          <input id="imageInput" type="file" accept="image/*" hidden>
+          <input id="audioInput" type="file" accept="audio/*" hidden>
+          <input id="videoInput" type="file" accept="video/*" hidden>
+        </div>
+        <div id="cameraDrawer" class="camera-drawer" hidden>
+          <div class="camera-preview"><video id="cameraPreview" autoplay muted playsinline></video><div class="camera-overlay">Frames sampled at up to 1 fps</div></div>
+          <div class="camera-controls"><div><strong>Camera stream</strong><small id="cameraStatus">Ready to start</small></div><button id="cameraStartBtn" class="btn btn-primary">Start sharing</button><button id="cameraStopBtn" class="btn btn-secondary" disabled>Stop</button></div>
+        </div>
+        <div class="workspace-foot"><span>LIVE API · AUDIO OUT 24 kHz PCM</span><span id="usageText">Waiting for session</span></div>
+      </section>
+
+      <aside class="event-sidebar">
+        <div class="event-head"><div><p class="eyebrow">OBSERVABILITY</p><h2>Session events</h2></div><button id="clearEventsBtn" class="icon-btn" title="Clear events" aria-label="Clear events"><span data-icon="rotate-ccw" data-icon-size="15"></span></button></div>
+        <div class="event-summary"><span><i class="summary-dot accent"></i>Setup</span><span><i class="summary-dot green"></i>Stream</span><span><i class="summary-dot amber"></i>Thinking</span></div>
+        <div id="eventLog" class="event-log"></div>
+        <div class="event-footer"><span id="eventCount">0 events</span><button id="copySetupBtn" class="text-action">Copy last setup JSON</button></div>
+      </aside>
+    </main>
+
+    <dialog id="sessionEventsDialog" class="session-events-dialog" aria-labelledby="sessionEventsTitle">
+      <div class="session-events-shell">
+        <header class="session-events-header">
+          <div><p class="eyebrow">OBSERVABILITY / LIVE</p><h2 id="sessionEventsTitle">Session activity</h2><p>Chronological stack of local events and model/tool traffic.</p></div>
+          <div class="session-events-header-actions"><button id="clearEventsHeaderBtn" class="icon-btn" type="button" title="Clear event stack" aria-label="Clear session events"><span data-icon="rotate-ccw" data-icon-size="15"></span></button><button id="closeSessionEventsBtn" class="icon-btn" type="button" title="Close session events" aria-label="Close session events"><span data-icon="x" data-icon-size="16"></span></button></div>
+        </header>
+        <div id="eventStackHost" class="event-stack-host"></div>
+      </div>
+    </dialog>
+
+    <dialog id="apiKeyGateDialog" class="api-key-gate" aria-labelledby="apiKeyGateTitle" aria-describedby="apiKeyGateDescription">
+      <div class="key-gate-shell">
+        <div class="key-gate-topline"><span class="key-gate-mark"><span data-icon="key-round" data-icon-size="22"></span></span><span class="key-gate-label">GEMINI LIVE / LOCAL ACCESS</span><span class="key-gate-required"><i></i> KEY REQUIRED</span></div>
+        <p class="eyebrow">ONE-TIME SETUP</p>
+        <h2 id="apiKeyGateTitle">Your key. Your session.</h2>
+        <p id="apiKeyGateDescription" class="key-gate-description">Enter a Gemini API key to continue into the studio. The session cannot start until a key is provided.</p>
+        <div id="requiredKeyProfileWrap" class="key-gate-profile" hidden>
+          <label class="field-label" for="requiredKeyProfileSelect">Or choose a saved profile</label>
+          <select id="requiredKeyProfileSelect" aria-label="Choose a saved API key profile"><option value="">Select a saved key</option></select>
+        </div>
+        <label class="field-label key-gate-input-label" for="requiredApiKey">Gemini API key</label>
+        <div class="secret-field key-gate-secret">
+          <input id="requiredApiKey" type="password" placeholder="Paste your Gemini API key" autocomplete="off" spellcheck="false" aria-describedby="requiredKeyFeedback">
+          <button id="toggleRequiredApiKey" class="mini-btn icon-mini-btn" type="button" title="Show or hide API key" aria-label="Show API key"><span data-icon="eye" data-icon-size="16"></span></button>
+        </div>
+        <p id="requiredKeyFeedback" class="key-gate-feedback" aria-live="polite">Enter your API key to unlock the studio.</p>
+        <label class="setting key-gate-remember"><span><strong>Remember this key</strong><small>Keep it in this browser for next time</small></span><input id="requiredRememberKey" type="checkbox" checked><i></i></label>
+        <div class="key-gate-security"><span data-icon="shield-check" data-icon-size="17"></span><p><strong>Local-first by design</strong><br>Your key is used by the local server to request a short-lived Gemini Live token. It is not shown in the event log.</p></div>
+        <button id="submitRequiredKey" class="btn btn-primary key-gate-submit" type="button" disabled>Continue to Connection <span data-icon="chevron-right" data-icon-size="16"></span></button>
+        <div class="key-gate-footer"><span>LOCAL ONLY</span><span>API key required before continuing</span></div>
+      </div>
+    </dialog>
+
+    <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsTitle">
+      <div class="settings-shell">
+        <header class="settings-header">
+          <div class="settings-title-lockup">
+            <span class="settings-logo"><span data-icon="sliders-horizontal" data-icon-size="19"></span></span>
+            <div><p class="eyebrow">STUDIO PREFERENCES</p><h2 id="settingsTitle">Settings</h2><p class="settings-subtitle">Tune the session, tools and visual atmosphere.</p></div>
+          </div>
+          <button id="closeSettingsBtn" class="icon-btn" type="button" title="Close settings" aria-label="Close settings"><span data-icon="x" data-icon-size="17"></span></button>
+        </header>
+        <nav class="settings-tabs" role="tablist" aria-label="Settings categories">
+          <button class="settings-tab active" type="button" role="tab" aria-selected="true" data-settings-tab="connection"><span data-icon="zap" data-icon-size="16"></span><span>Connection</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="voice"><span data-icon="audio-lines" data-icon-size="16"></span><span>Voice & session</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="audio"><span data-icon="sliders-horizontal" data-icon-size="16"></span><span>Audio & generation</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="tools"><span data-icon="wrench" data-icon-size="16"></span><span>Tools</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="expert"><span data-icon="braces" data-icon-size="16"></span><span>Expert</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="keys"><span data-icon="key-round" data-icon-size="16"></span><span>API keys</span></button>
+          <button class="settings-tab" type="button" role="tab" aria-selected="false" data-settings-tab="appearance"><span data-icon="palette" data-icon-size="16"></span><span>Appearance</span></button>
+        </nav>
+        <div class="settings-content">
+          <section class="settings-pane active connection-settings-pane" id="settingsPaneConnection" data-settings-pane="connection" role="tabpanel">
+            <div class="settings-section-intro"><p class="eyebrow">LOCAL CONNECTION</p><h3>Connect to Gemini Live</h3><p>Choose the API key profile and Live model used to establish a session. Credentials are entered locally and exchanged for a short-lived session token.</p></div>
+          </section>
+          <section class="settings-pane" id="settingsPaneVoice" data-settings-pane="voice" role="tabpanel" hidden></section>
+          <section class="settings-pane" id="settingsPaneAudio" data-settings-pane="audio" role="tabpanel" hidden></section>
+          <section class="settings-pane" id="settingsPaneTools" data-settings-pane="tools" role="tabpanel" hidden></section>
+          <section class="settings-pane" id="settingsPaneExpert" data-settings-pane="expert" role="tabpanel" hidden></section>
+
+          <section class="settings-pane key-manager-pane" id="settingsPaneKeys" data-settings-pane="keys" role="tabpanel" hidden>
+            <div class="settings-section-intro"><p class="eyebrow">CREDENTIAL VAULT · LOCAL BROWSER</p><h3>API key profiles</h3><p>Save multiple keys with memorable labels, then switch profiles from Settings → Connection. Key values are never shown in the profile list or event log.</p></div>
+            <div id="savedKeyList" class="saved-key-list"></div>
+            <div class="key-editor-card">
+              <div class="key-editor-heading"><span class="key-editor-icon"><span data-icon="key-round" data-icon-size="18"></span></span><div><h3 id="keyEditorTitle">Add a key profile</h3><p>Paste a key and give this profile a name.</p></div></div>
+              <div class="field-grid key-editor-grid">
+                <div><label class="field-label" for="keyProfileLabel">Profile name</label><input id="keyProfileLabel" type="text" maxlength="48" placeholder="e.g. Personal, Work, Testing"></div>
+                <div><label class="field-label" for="managedKeyValue">Gemini API key</label><div class="secret-field"><input id="managedKeyValue" type="password" autocomplete="off" spellcheck="off" placeholder="Paste API key"><button id="revealManagedKeyBtn" class="mini-btn icon-mini-btn" type="button" title="Show or hide key" aria-label="Show API key"><span data-icon="eye" data-icon-size="15"></span></button></div></div>
+              </div>
+              <label class="setting compact-setting"><span><strong>Use as selected profile</strong><small>Select this profile in Settings → Connection after saving</small></span><input id="selectManagedKeyToggle" type="checkbox" checked><i></i></label>
+              <div class="button-row"><button id="saveManagedKeyBtn" class="btn btn-primary" type="button"><span data-icon="save" data-icon-size="15"></span>Save profile</button><button id="cancelEditKeyBtn" class="btn btn-secondary" type="button" hidden>Cancel edit</button></div>
+              <p id="keyManagerStatus" class="field-note" aria-live="polite">Remembering keys is enabled by default.</p>
+            </div>
+            <div class="privacy-note"><span data-icon="shield-check" data-icon-size="17"></span><p><strong>Local browser storage</strong><br>Browser storage is convenient, but it is not an encrypted vault. Keep this browser profile secured on shared computers.</p></div>
+          </section>
+
+          <section class="settings-pane appearance-pane" id="settingsPaneAppearance" data-settings-pane="appearance" role="tabpanel" hidden>
+            <div class="settings-section-intro"><p class="eyebrow">VISUAL SYSTEM</p><h3>Make the studio yours</h3><p>Choose a crafted starting palette, then fine-tune background, panels and accent colors. Changes apply immediately and stay on this browser.</p></div>
+            <label class="field-label" for="themePreset">Theme preset</label>
+            <select id="themePreset">
+              <option value="midnight">Midnight · warm brass</option>
+              <option value="slate">Slate · cool blue</option>
+              <option value="forest">Forest · calm green</option>
+              <option value="plum">Plum · soft violet</option>
+              <option value="light">Paper · light studio</option>
+              <option value="custom">Custom palette</option>
+            </select>
+            <div class="theme-preview" id="themePreview" aria-label="Theme preview">
+              <div class="theme-preview-head"><span class="preview-orb"></span><span><strong>Gemini Live</strong><small>STUDIO / LOCAL</small></span><span class="preview-preview-pill">LIVE</span></div>
+              <div class="theme-preview-card"><span class="preview-line"></span><span class="preview-line short"></span><span class="preview-accent"></span></div>
+              <div class="theme-preview-messages"><span></span><span></span><span></span></div>
+            </div>
+            <div class="color-settings">
+              <article class="color-control">
+                <div class="color-control-title"><span class="color-swatch background-swatch"></span><div><strong>Background</strong><small>Canvas and surrounding space</small></div></div>
+                <div class="color-input-row"><input id="themeBackgroundColor" type="color" value="#0c0d10" aria-label="Background color"><code id="themeBackgroundHex">#0C0D10</code></div>
+                <div class="rgb-grid"><label>R<input id="themeBackgroundR" type="number" min="0" max="255" value="12"></label><label>G<input id="themeBackgroundG" type="number" min="0" max="255" value="13"></label><label>B<input id="themeBackgroundB" type="number" min="0" max="255" value="16"></label></div>
+              </article>
+              <article class="color-control">
+                <div class="color-control-title"><span class="color-swatch surface-swatch"></span><div><strong>Surface</strong><small>Panels, cards and controls</small></div></div>
+                <div class="color-input-row"><input id="themeSurfaceColor" type="color" value="#15171c" aria-label="Surface color"><code id="themeSurfaceHex">#15171C</code></div>
+                <div class="rgb-grid"><label>R<input id="themeSurfaceR" type="number" min="0" max="255" value="21"></label><label>G<input id="themeSurfaceG" type="number" min="0" max="255" value="23"></label><label>B<input id="themeSurfaceB" type="number" min="0" max="255" value="28"></label></div>
+              </article>
+              <article class="color-control">
+                <div class="color-control-title"><span class="color-swatch accent-swatch"></span><div><strong>Accent</strong><small>Actions, focus and highlights</small></div></div>
+                <div class="color-input-row"><input id="themeAccentColor" type="color" value="#d7c19b" aria-label="Accent color"><code id="themeAccentHex">#D7C19B</code></div>
+                <div class="rgb-grid"><label>R<input id="themeAccentR" type="number" min="0" max="255" value="215"></label><label>G<input id="themeAccentG" type="number" min="0" max="255" value="193"></label><label>B<input id="themeAccentB" type="number" min="0" max="255" value="155"></label></div>
+              </article>
+            </div>
+            <div class="button-row appearance-actions"><button id="resetThemeBtn" class="btn btn-secondary" type="button"><span data-icon="rotate-ccw" data-icon-size="15"></span>Reset appearance</button><span id="themeStatus" class="field-note">Saved automatically on this browser.</span></div>
+          </section>
+        </div>
+        <footer class="settings-footer"><span id="settingsPreferenceStatus"><span data-icon="circle-check" data-icon-size="14"></span> Preferences are remembered automatically</span><div class="settings-footer-actions"><button id="resetAllSettingsBtn" type="button" class="btn btn-secondary" title="Restore default settings without deleting saved API keys"><span data-icon="rotate-ccw" data-icon-size="15"></span>Restore defaults</button><button id="doneSettingsBtn" type="button" class="btn btn-primary">Done <span data-icon="check" data-icon-size="15"></span></button></div></footer>
+      </div>
+    </dialog>
+
+    <div id="toastRegion" class="toast-region" aria-live="assertive"></div>
+    <footer class="global-footer"><span>GEMINI LIVE STUDIO</span><span>Local app · API requests go to Google Gemini</span><a href="https://ai.google.dev/gemini-api/docs/live-api/capabilities" target="_blank" rel="noreferrer">Live API documentation <span data-icon="external-link" data-icon-size="12"></span></a></footer>
+  </div>
+</body>
+</html>
